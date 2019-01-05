@@ -80,6 +80,28 @@ def returnbook(db):
             db.commit()
             print('成功还书')
 
+def deletebook(db):
+    # 使用cursor()方法获取操作游标 
+    cursor=db.cursor()
+    name=input('删除的书名:')
+    sql='select name from books where name="%s";'%(name)
+    cursor.execute(sql)
+    s=cursor.fetchall()
+    if len(s)==0:
+        print('这里没有这本书')
+    else:
+        sql='select status,borrowtimes,borrowtime,id from books where name="%s";'%(name)
+        cursor.execute(sql)
+        result=cursor.fetchall()
+        if result[0][0] == '已借出':
+            print('该书已借出,不能删除')
+        else:
+            sql1='delete from books where name="%s";'%(name)
+            cursor.execute(sql1)
+            db.commit()
+            print('成功删除该书籍')
+
+
 def querydb(db):
     # 使用cursor()方法获取操作游标 
     cursor = db.cursor()
@@ -148,7 +170,7 @@ if __name__ == '__main__':
         elif choice == '5':
             borrowlist(db)
         elif choice == '6':
-            pass
+            deletebook(db)
         elif choice == '7':
             print ("谢谢使用")
             db.close()
