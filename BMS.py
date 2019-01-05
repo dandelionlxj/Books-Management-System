@@ -178,11 +178,9 @@ if __name__ == '__main__':
                     print('**********************图书管理系统******************************')
                     print('                     1.查询所有书籍                             ')
                     print('                     2.增加书籍                                ')
-                    print('                     3.借出书籍                                ')
-                    print('                     4.归还书籍                                ')
-                    print('                     5.借还情况                                ')
-                    print('                     6.删除书籍                               ')
-                    print('                     7.退出系统                                ')
+                    print('                     3.借还情况                                ')
+                    print('                     4.删除书籍                               ')
+                    print('                     5.退出系统                                ')
                     print('***************************************************************')
                     choice = input("请选择:")
                     if choice == '1':
@@ -190,14 +188,10 @@ if __name__ == '__main__':
                     elif choice == '2':
                         addbook(db)
                     elif choice == '3':
-                        borrowbook(db)
-                    elif choice == '4':
-                        returnbook(db)
-                    elif choice == '5':
                         borrowlist(db)
-                    elif choice == '6':
+                    elif choice == '4':
                         deletebook(db)
-                    elif choice == '7':
+                    elif choice == '5':
                         print ("谢谢使用")
                         print('\n')
                         db.close()
