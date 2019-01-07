@@ -22,6 +22,9 @@ def addbook(db):
     # 执行SQL语句
     cursor.execute(sql1)
     n=len(cursor.fetchall())
+    sql1='select id from books; '
+    cursor.execute(sql1)
+    s=cursor.fetchall()
     name=input('书名:')
     sql='select name from books where name="%s";'%(name)
     cursor.execute(sql)
@@ -31,7 +34,7 @@ def addbook(db):
     else:
         type=input('书类型:')
         # SQL 插入语句
-        sql = 'INSERT INTO books(id,name,type,status,borrowtimes)VALUES ("%d","%s","%s","未借出","%d");'%(n+1,name,type,0)
+        sql = 'INSERT INTO books(id,name,type,status,borrowtimes)VALUES ("%d","%s","%s","未借出","%d");'%(s[n-1][0]+1,name,type,0)
         # 执行sql语句
         cursor.execute(sql)
         # 提交到数据库执行
