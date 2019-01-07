@@ -130,18 +130,7 @@ def searchreader(db):
     if len(result)==0:
         print('没有该读者的信息')
     else:
-        print('------------------------------------------------------------------------------------------------------')
-        for row in result:
-            name=row[0]
-            sex=row[1]
-            speciality=row[2]
-            id=row[3]
-            bookname=row[4]
-            borrowtime=row[5]
-            returntime=row[6]
-            print("name:%s, sex:%s, speciality:%s, id:%d, bookname:%s, borrowtime:%s, returntime:%s"%(name,sex,speciality,id,bookname,borrowtime,returntime))
-        print('------------------------------------------------------------------------------------------------------')
-        print('\n')
+        printreaders(result)
 
 def deletereader(db):
     cursor=db.cursor()
@@ -180,15 +169,7 @@ def searchbook(db):
         if len(a)==0:
             print('该书不存在')
         else:
-            for row in a:
-                id = row[0]
-                name = row[1]
-                type = row[2]
-                status=row[3]
-                borrowtimes=row[4]
-                time=row[5]
-                # 打印结果
-                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
+            printbooks(a)
     elif choice=='2':
         type=input('请输入类型：')
         sql='select * from books where type="%s";'%(type)
@@ -197,18 +178,7 @@ def searchbook(db):
         if len(b)==0:
             print('没有该类型')
         else:
-            print('------------------------------------------------------------------------------------------------------')
-            for row in b:
-                id = row[0]
-                name = row[1]
-                type = row[2]
-                status=row[3]
-                borrowtimes=row[4]
-                time=row[5]
-                # 打印结果
-                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
-            print('------------------------------------------------------------------------------------------------------')
-            print('\n')
+            printbooks(b)
     elif choice=='3':
         sql='select * from books where status="未借出";'
         cursor.execute(sql)
@@ -216,25 +186,44 @@ def searchbook(db):
         if len(c)==0:
             print('所有的书都被借出了')
         else:
-            print('------------------------------------------------------------------------------------------------------')
-            for row in c:
-                id = row[0]
-                name = row[1]
-                type = row[2]
-                status=row[3]
-                borrowtimes=row[4]
-                time=row[5]
-                # 打印结果
-                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
-            print('------------------------------------------------------------------------------------------------------')
-            print('\n')
+            printbooks(c)
     else:
         print('输入错误，请重新输入')
         print('\n')
 
-            
+def printbooks(s):
+    '''
+    打印书本信息
+    '''
+    print('------------------------------------------------------------------------------------------------------')
+    for row in s:
+        id = row[0]
+        name = row[1]
+        type = row[2]
+        status=row[3]
+        borrowtimes=row[4]
+        time=row[5]
+        # 打印结果
+        print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
+    print('------------------------------------------------------------------------------------------------------')
+    print('\n')
 
-
+def printreaders(s):
+    '''
+    打印读者信息
+    '''
+    print('------------------------------------------------------------------------------------------------------')
+    for row in s:
+        name=row[0]
+        sex=row[1]
+        speciality=row[2]
+        id=row[3]
+        bookname=row[4]
+        borrowtime=row[5]
+        returntime=row[6]
+        print("name:%s, sex:%s, speciality:%s, id:%d, bookname:%s, borrowtime:%s, returntime:%s"%(name,sex,speciality,id,bookname,borrowtime,returntime))
+    print('------------------------------------------------------------------------------------------------------')
+    print('\n')
 
 def querydb(db):
     '''
@@ -251,18 +240,7 @@ def querydb(db):
     cursor.execute(sql)
     # 获取所有记录列表
     results = cursor.fetchall()
-    print('------------------------------------------------------------------------------------------------------')
-    for row in results:
-        id = row[0]
-        name = row[1]
-        type = row[2]
-        status=row[3]
-        borrowtimes=row[4]
-        time=row[5]
-        # 打印结果
-        print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
-    print('------------------------------------------------------------------------------------------------------')
-    print('\n')
+    printbooks(results)
 
 def borrowlist(db):
     '''
@@ -272,18 +250,8 @@ def borrowlist(db):
     sql='select * from readers'
     cursor.execute(sql)
     results=cursor.fetchall()
-    print('------------------------------------------------------------------------------------------------------')
-    for row in results:
-        name=row[0]
-        sex=row[1]
-        speciality=row[2]
-        id=row[3]
-        bookname=row[4]
-        borrowtime=row[5]
-        returntime=row[6]
-        print("name:%s, sex:%s, speciality:%s, id:%d, bookname:%s, borrowtime:%s, returntime:%s"%(name,sex,speciality,id,bookname,borrowtime,returntime))
-    print('------------------------------------------------------------------------------------------------------')
-    print('\n')
+    printreaders(results)
+    
 
 if __name__ == '__main__': 
     while True:
