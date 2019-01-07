@@ -108,7 +108,7 @@ def deletebook(db):
     if len(s)==0:
         print('这里没有这本书')
     else:
-        sql='select status,borrowtimes,borrowtime,id from books where name="%s";'%(name)
+        sql='select status from books where name="%s";'%(name)
         cursor.execute(sql)
         result=cursor.fetchall()
         if result[0][0] == '已借出':
@@ -136,6 +136,9 @@ def searchreader(db):
         printreaders(result)
 
 def deletereader(db):
+    '''
+    删除读者
+    '''
     cursor=db.cursor()
     name =input('请输入要删除的读者名：')
     speciality=input('专业:')
