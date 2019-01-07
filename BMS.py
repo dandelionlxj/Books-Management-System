@@ -115,6 +115,125 @@ def deletebook(db):
             cursor.execute(sql1)
             db.commit()
             print('成功删除该书籍')
+            
+
+def searchreader(db):
+    '''
+    查询读者
+    '''
+    cursor=db.cursor()
+    name=input('请输入查询的读者名:')
+    speciality=input('专业:')
+    sql='select * from readers where name ="%s" and speciality="%s";'%(name,speciality)
+    cursor.execute(sql)
+    result=cursor.fetchall()
+    if len(result)==0:
+        print('没有该读者的信息')
+    else:
+        print('------------------------------------------------------------------------------------------------------')
+        for row in result:
+            name=row[0]
+            sex=row[1]
+            speciality=row[2]
+            id=row[3]
+            bookname=row[4]
+            borrowtime=row[5]
+            returntime=row[6]
+            print("name:%s, sex:%s, speciality:%s, id:%d, bookname:%s, borrowtime:%s, returntime:%s"%(name,sex,speciality,id,bookname,borrowtime,returntime))
+        print('------------------------------------------------------------------------------------------------------')
+        print('\n')
+
+def deletereader(db):
+    cursor=db.cursor()
+    name =input('请输入要删除的读者名：')
+    speciality=input('专业:')
+    sql1='select returntime from readers where name="%s" and speciality="%s";'%(name,speciality)
+    cursor.execute(sql1)
+    result=cursor.fetchall()
+    returntime=[]
+    s=0
+    if len(result)==0:
+        print('没有该读者的信息') 
+    else:
+        for row in result: 
+            returntime.append(row[0]) 
+        for i in range(len(returntime)):
+            if returntime[i]==None:#如果没有归还时间，证明有书还没还
+                s+=1
+        if s==0:#所有书都还了，可以删除该读者
+            sql='delete from readers where name="%s";'%(name)
+            cursor.execute(sql)
+            db.commit()
+            print('删除成功')
+        else:
+            print('该读者还有书没还，不能删除')
+            
+def searchbook(db):
+    cursor=db.cursor()
+    print('1.书名查找，2类型查找，3还未借出')
+    choice=input('请选择:')
+    if choice=='1':
+        name=input('请输入书名：')
+        sql='select * from books where name="%s";'%(name)
+        cursor.execute(sql)
+        a=cursor.fetchall()
+        if len(a)==0:
+            print('该书不存在')
+        else:
+            for row in a:
+                id = row[0]
+                name = row[1]
+                type = row[2]
+                status=row[3]
+                borrowtimes=row[4]
+                time=row[5]
+                # 打印结果
+                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
+    elif choice=='2':
+        type=input('请输入类型：')
+        sql='select * from books where type="%s";'%(type)
+        cursor.execute(sql)
+        b=cursor.fetchall()
+        if len(b)==0:
+            print('没有该类型')
+        else:
+            print('------------------------------------------------------------------------------------------------------')
+            for row in b:
+                id = row[0]
+                name = row[1]
+                type = row[2]
+                status=row[3]
+                borrowtimes=row[4]
+                time=row[5]
+                # 打印结果
+                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
+            print('------------------------------------------------------------------------------------------------------')
+            print('\n')
+    elif choice=='3':
+        sql='select * from books where status="未借出";'
+        cursor.execute(sql)
+        c=cursor.fetchall()
+        if len(c)==0:
+            print('所有的书都被借出了')
+        else:
+            print('------------------------------------------------------------------------------------------------------')
+            for row in c:
+                id = row[0]
+                name = row[1]
+                type = row[2]
+                status=row[3]
+                borrowtimes=row[4]
+                time=row[5]
+                # 打印结果
+                print ("ID: %s, Name: %s, type: %s, status:%s, borrowtimes:%d, borrowtime=%s" % (id,name,type,status,borrowtimes,time))
+            print('------------------------------------------------------------------------------------------------------')
+            print('\n')
+    else:
+        print('输入错误，请重新输入')
+        print('\n')
+
+            
+
 
 
 def querydb(db):
@@ -177,21 +296,30 @@ if __name__ == '__main__':
                 while(True):
                     print('**********************图书管理系统******************************')
                     print('                     1.查询所有书籍                             ')
-                    print('                     2.增加书籍                                ')
-                    print('                     3.借还情况                                ')
-                    print('                     4.删除书籍                               ')
-                    print('                     5.退出系统                                ')
+                    print('                     2.查询指定书籍                             ')
+                    print('                     3.增加书籍                                ')
+                    print('                     4.借还情况                                ')
+                    print('                     5.删除书籍                                ')
+                    print('                     6.查询读者                                ')
+                    print('                     7.删除读者                                ')
+                    print('                     8.退出系统                                ')
                     print('***************************************************************')
                     choice = input("请选择:")
                     if choice == '1':
                         querydb(db)
                     elif choice == '2':
-                        addbook(db)
+                        searchbook(db)
                     elif choice == '3':
-                        borrowlist(db)
+                        addbook(db)
                     elif choice == '4':
-                        deletebook(db)
+                        borrowlist(db)
                     elif choice == '5':
+                        deletebook(db)
+                    elif choice == '6':
+                        searchreader(db)
+                    elif choice == '7':
+                        deletereader(db)
+                    elif choice == '8':
                         print ("谢谢使用")
                         print('\n')
                         db.close()
