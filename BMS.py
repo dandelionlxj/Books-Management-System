@@ -47,27 +47,23 @@ def borrowbook(db):
     # 使用cursor()方法获取操作游标 
     cursor = db.cursor()
     name=input('借的书名:')
-    sql='select name from books where name="%s";'%(name)
+    sql='select status,borrowtimes,borrowtime,id from books where name="%s";'%(name)
     cursor.execute(sql)
-    s=cursor.fetchall()
-    if len(s)==0:
-        print('该书不存在')
+    result=cursor.fetchall()
+    if len(result)==0:
+        print('没有该书籍')
+    elif result[0][0] == '已借出':
+        print('该书已借出')
     else:
-        sql='select status,borrowtimes,borrowtime,id from books where name="%s";'%(name)
+        rname=input('姓名:')
+        rsex=input('性别:')
+        rspeciality=input('专业：')
+        sql='insert into readers(name,sex,speciality,id,bookname,borrowtime) values ("%s","%s","%s","%d","%s","%s");'%(rname,rsex,rspeciality,result[0][3],name,datetime.date.today())
         cursor.execute(sql)
-        result=cursor.fetchall()
-        if result[0][0] == '已借出':
-            print('该书已借出')
-        else:
-            rname=input('姓名:')
-            rsex=input('性别:')
-            rspeciality=input('专业：')
-            sql='insert into readers(name,sex,speciality,id,bookname,borrowtime) values ("%s","%s","%s","%d","%s","%s");'%(rname,rsex,rspeciality,result[0][3],name,datetime.date.today())
-            cursor.execute(sql)
-            sql1='update books set status="%s",borrowtimes="%d",borrowtime="%s" where name="%s";'%('已借出',result[0][1]+1,datetime.date.today(),name)
-            cursor.execute(sql1)
-            db.commit()
-            print('成功借书')
+        sql1='update books set status="%s",borrowtimes="%d",borrowtime="%s" where name="%s";'%('已借出',result[0][1]+1,datetime.date.today(),name)
+        cursor.execute(sql1)
+        db.commit()
+        print('成功借书')
 
 def returnbook(db):
     '''
@@ -76,24 +72,20 @@ def returnbook(db):
     # 使用cursor()方法获取操作游标 
     cursor = db.cursor()
     name=input('还的书名:')
-    sql='select name from books where name="%s";'%(name)
+    sql='select status from books where name="%s";'%(name)
     cursor.execute(sql)
-    s=cursor.fetchall()
-    if len(s)==0:
+    result=cursor.fetchall()
+    if len(result)==0:
         print('这里没有这本书，你还错地方了')
+    elif result[0][0]=='未借出':
+        print('无人借该书，你还错地方了')
     else:
-        sql='select status from books where name="%s";'%(name)
+        sql1='update readers set returntime="%s" where bookname="%s";'%(datetime.date.today(),name)
+        cursor.execute(sql1)
+        sql='update books set status="%s" where name="%s";'%('未借出',name)
         cursor.execute(sql)
-        result=cursor.fetchall()
-        if result[0][0]=='未借出':
-            print('无人借该书，你还错地方了')
-        else:
-            sql1='update readers set returntime="%s" where bookname="%s";'%(datetime.date.today(),name)
-            cursor.execute(sql1)
-            sql='update books set status="%s" where name="%s";'%('未借出',name)
-            cursor.execute(sql)
-            db.commit()
-            print('成功还书')
+        db.commit()
+        print('成功还书')
 
 def deletebook(db):
     '''
