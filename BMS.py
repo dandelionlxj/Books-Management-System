@@ -8,7 +8,7 @@ def connectdb():
     '''
     #print('连接到mysql服务器...')
     # 打开数据库连接
-    db = mysql.connector.connect(user="root", passwd="980507", database="library", use_unicode=True)
+    db = mysql.connector.connect(user="root", passwd="*", database="library", use_unicode=True)
     #print('连接上了!')
     return db
 

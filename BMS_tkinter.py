@@ -16,7 +16,7 @@ def connectdb():
 
         # 打开数据库连接
         global db
-        db = mysql.connector.connect(user="root", passwd="980507", database="library", use_unicode=True)
+        db = mysql.connector.connect(user="root", passwd="*", database="library", use_unicode=True)
         print('Connect successfully!')
     except mysql.connector.Error as err:
         print("Error: {}".format(err.msg))
