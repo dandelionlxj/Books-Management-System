@@ -3,8 +3,24 @@ import mysql.connector
 import datetime
 from tkinter import *
 from tkinter import messagebox
+import os
 
 db = None
+
+
+def window_center(window_name, width, height):
+    """
+
+    :param width:
+    :param height:
+    :return: 获取屏幕尺寸以计算布局参数，使窗口居屏幕中央
+    """
+    width = width
+    height = height
+    screenwidth = window_name.winfo_screenwidth()
+    screenheight = window_name.winfo_screenheight()
+    alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+    return alignstr
 
 
 def connectdb():
@@ -16,7 +32,7 @@ def connectdb():
 
         # 打开数据库连接
         global db
-        db = mysql.connector.connect(user="root", passwd="*", database="library", use_unicode=True)
+        db = mysql.connector.connect(user="root", passwd="980507", database="library", use_unicode=True)
         print('Connect successfully!')
     except mysql.connector.Error as err:
         print("Error: {}".format(err.msg))
@@ -30,7 +46,8 @@ def addbook():
     '''
     add_book_window = Toplevel(manager_gui)
     add_book_window.title('Add Book')
-    add_book_window.geometry('500x300')
+    add_book_window.geometry(window_center(add_book_window, 500, 300))
+    add_book_window.wm_attributes("-topmost", 1)
 
     Label(add_book_window, text='书名:').place(x=50, y=50)
     Label(add_book_window, text='书类型:').place(x=50, y=90)
@@ -56,7 +73,13 @@ def addbook():
         cursor.execute(sql)
         result = cursor.fetchall()
         if len(result) != 0 and result[0][0] == name:
+            add_book_window.withdraw()
             messagebox.showerror(message='该书已存在')
+            add_book_window.deiconify()
+        elif name == '' or type == '':
+            add_book_window.withdraw()
+            messagebox.showerror(message='请将信息填写完整')
+            add_book_window.deiconify()
         else:
             # SQL 插入语句
             sql = 'INSERT INTO books(id,name,type,status,borrowtimes)VALUES ("%d","%s","%s","未借出","%d");' % (
@@ -65,6 +88,7 @@ def addbook():
             cursor.execute(sql)
             # 提交到数据库执行
             db.commit()
+            add_book_window.withdraw()
             messagebox.showinfo(message='添加书籍成功')
             add_book_window.destroy()
 
@@ -81,7 +105,7 @@ def borrowbook():
     cursor = db.cursor()
     borrowbook_window = Toplevel(reader)
     borrowbook_window.title('Borrow book')
-    borrowbook_window.geometry('500x300')
+    borrowbook_window.geometry(window_center(borrowbook_window, 500, 300))
 
     Label(borrowbook_window, text='借的书名:').place(x=50, y=50)
     Label(borrowbook_window, text='姓名:').place(x=50, y=90)
@@ -99,17 +123,31 @@ def borrowbook():
 
     def confirm():
         name = var_bookname.get()
+        rname = var_name.get()
+        rsex = var_sex.get()
+        print(rsex)
+        rspeciality = var_sp.get()
         sql = 'select status,borrowtimes,borrowtime,id from books where name="%s";' % (name)
         cursor.execute(sql)
         result = cursor.fetchall()
-        if len(result) == 0:
+        if rname == '' or rsex == '' or rspeciality == '':
+            borrowbook_window.withdraw()
+            messagebox.showerror(message='请填写完整的信息')
+            borrowbook_window.deiconify()
+        elif len(result) == 0:
+            # 先隐藏窗口，当弹出消息后再显示
+            borrowbook_window.withdraw()
             messagebox.showerror(message='没有该书籍')
+            borrowbook_window.deiconify()
+        elif rsex != '男' and rsex != '女':
+            borrowbook_window.withdraw()
+            messagebox.showerror(message='性别只能填写男或女')
+            borrowbook_window.deiconify()
         elif result[0][0] == '已借出':
+            borrowbook_window.withdraw()
             messagebox.showerror(message='该书已借出')
+            borrowbook_window.deiconify()
         else:
-            rname = var_name.get()
-            rsex = var_sex.get()
-            rspeciality = var_sp.get()
             sql = 'insert into readers(name,sex,speciality,id,bookname,borrowtime) values ("%s","%s","%s","%d","%s","%s");' % (
                 rname, rsex, rspeciality, result[0][3], name, datetime.date.today())
             cursor.execute(sql)
@@ -117,10 +155,13 @@ def borrowbook():
                 '已借出', result[0][1] + 1, datetime.date.today(), name)
             cursor.execute(sql1)
             db.commit()
+            borrowbook_window.withdraw()
             messagebox.showinfo(message='成功借书')
             borrowbook_window.destroy()
 
     Button(borrowbook_window, text='借书', command=confirm).place(x=170, y=210)
+    # 让当前窗口保持最前
+    borrowbook_window.wm_attributes("-topmost", 1)
     borrowbook_window.mainloop()
 
 
@@ -132,7 +173,8 @@ def returnbook():
     cursor = db.cursor()
     returnbook_window = Toplevel(reader)
     returnbook_window.title('Return Book')
-    returnbook_window.geometry('500x300')
+    returnbook_window.geometry(window_center(returnbook_window, 500, 300))
+    returnbook_window.wm_attributes("-topmost", 1)
 
     Label(returnbook_window, text='书名:').place(x=50, y=50)
 
@@ -145,15 +187,20 @@ def returnbook():
         cursor.execute(sql)
         result = cursor.fetchall()
         if len(result) == 0:
+            returnbook_window.withdraw()
             messagebox.showerror(message='这里没有这本书，你还错地方了')
+            returnbook_window.deiconify()
         elif result[0][0] == '未借出':
+            returnbook_window.withdraw()
             messagebox.showerror(message='无人借该书，你还错地方了')
+            returnbook_window.deiconify()
         else:
             sql1 = 'update readers set returntime="%s" where bookname="%s";' % (datetime.date.today(), name)
             cursor.execute(sql1)
             sql = 'update books set status="%s" where name="%s";' % ('未借出', name)
             cursor.execute(sql)
             db.commit()
+            returnbook_window.withdraw()
             messagebox.showinfo(message='成功还书')
             returnbook_window.destroy()
 
@@ -167,7 +214,8 @@ def deletebook():
     '''
     deletebook_window = Toplevel()
     deletebook_window.title('Deletebook')
-    deletebook_window.geometry('500x300')
+    deletebook_window.geometry(window_center(deletebook_window, 500, 300))
+    deletebook_window.wm_attributes("-topmost", 1)
 
     Label(deletebook_window, text='删除的书名:').place(x=50, y=50)
 
@@ -176,31 +224,33 @@ def deletebook():
 
     def delete_confirm():
 
-        def delete():
-            # 使用cursor()方法获取操作游标
-            cursor = db.cursor()
-            name = var_name.get()
-            sql = 'select name from books where name="%s";' % (name)
+        # 使用cursor()方法获取操作游标
+        cursor = db.cursor()
+        name = var_name.get()
+        sql = 'select name from books where name="%s";' % (name)
+        cursor.execute(sql)
+        s = cursor.fetchall()
+        if len(s) == 0:
+            deletebook_window.withdraw()
+            messagebox.showerror(message='没有此书')
+            deletebook_window.deiconify()
+        else:
+            sql = 'select status from books where name="%s";' % (name)
             cursor.execute(sql)
-            s = cursor.fetchall()
-            if len(s) == 0:
-                messagebox.showerror(message='没有此书')
+            result = cursor.fetchall()
+            if result[0][0] == '已借出':
+                deletebook_window.withdraw()
+                messagebox.showerror(message='该书已借出,不能删除')
+                deletebook_window.deiconify()
             else:
-                sql = 'select status from books where name="%s";' % (name)
-                cursor.execute(sql)
-                result = cursor.fetchall()
-                if result[0][0] == '已借出':
-                    messagebox.showerror(message='该书已借出,不能删除')
-                else:
+                deletebook_window.withdraw()
+                confirm = messagebox.askyesno(title='confirm', message='确定删除这本书吗？')
+                if confirm:
                     sql1 = 'delete from books where name="%s";' % (name)
                     cursor.execute(sql1)
                     db.commit()
                     messagebox.showinfo(message='成功删除该书籍')
                     deletebook_window.destroy()
-
-        confirm = messagebox.askyesno(title='confirm', message='确定删除这本书吗？')
-        if confirm:
-            delete()
 
     Button(deletebook_window, command=delete_confirm, text='删除').place(x=170, y=130)
     deletebook_window.mainloop()
@@ -214,7 +264,8 @@ def searchreader():
 
     searchreader_window = Toplevel(manager_gui)
     searchreader_window.title('search reader_info')
-    searchreader_window.geometry('500x300')
+    searchreader_window.geometry(window_center(searchreader_window, 500, 300))
+    searchreader_window.wm_attributes("-topmost", 1)
 
     Label(searchreader_window, text='姓名:').place(x=50, y=50)
     Label(searchreader_window, text='专业:').place(x=50, y=90)
@@ -231,8 +282,14 @@ def searchreader():
         sql = 'select * from readers where name ="%s" and speciality="%s";' % (name, speciality)
         cursor.execute(sql)
         result = cursor.fetchall()
-        if len(result) == 0:
+        if name == '' or speciality == '':
+            searchreader_window.withdraw()
+            messagebox.showerror(message='请填写完整的信息')
+            searchreader_window.deiconify()
+        elif len(result) == 0:
+            searchreader_window.withdraw()
             messagebox.showerror(message='该读者没有借阅任何书')
+            searchreader_window.deiconify()
         else:
             printreaders(result)
 
@@ -247,7 +304,8 @@ def deletereader():
     cursor = db.cursor()
     deletereader_window = Toplevel(manager_gui)
     deletereader_window.title('Delete Reader')
-    deletereader_window.geometry('500x300')
+    deletereader_window.geometry(window_center(deletereader_window, 500, 300))
+    deletereader_window.wm_attributes("-topmost", 1)
 
     Label(deletereader_window, text='读者名:').place(x=50, y=50)
     Label(deletereader_window, text='专业:').place(x=50, y=90)
@@ -258,35 +316,44 @@ def deletereader():
     Entry(deletereader_window, textvariable=sepicality_input).place(x=160, y=90)
 
     def delete_confirm():
+        name = name_input.get()
+        speciality = sepicality_input.get()
+        sql1 = 'select returntime from readers where name="%s" and speciality="%s";' % (name, speciality)
+        cursor.execute(sql1)
+        result = cursor.fetchall()
+        returntime = []
+        s = 0
+        if name == '' or speciality == '':
+            deletereader_window.withdraw()
+            messagebox.showerror(message='请输入完整的信息')
+            deletereader_window.deiconify()
 
-        def delete():
-            name = name_input.get()
-            speciality = sepicality_input.get()
-            sql1 = 'select returntime from readers where name="%s" and speciality="%s";' % (name, speciality)
-            cursor.execute(sql1)
-            result = cursor.fetchall()
-            returntime = []
-            s = 0
-            if len(result) == 0:
-                messagebox.showerror(message='没有该读者的信息')
-            else:
-                for row in result:
-                    returntime.append(row[0])
-                for i in range(len(returntime)):
-                    if returntime[i] == None:  # 如果没有归还时间，证明有书还没还
-                        s += 1
-                if s == 0:  # 所有书都还了，可以删除该读者
+        elif len(result) == 0:
+            deletereader_window.withdraw()
+            messagebox.showerror(message='没有该读者的信息')
+            deletereader_window.deiconify()
+
+        else:
+            for row in result:
+                returntime.append(row[0])
+            for i in range(len(returntime)):
+                if returntime[i] == None:  # 如果没有归还时间，证明有书还没还
+                    s += 1
+            if s == 0:  # 所有书都还了，可以删除该读者
+                deletereader_window.withdraw()
+                confirm = messagebox.askyesno(title='confirm', message='确定删除该读者的信息吗？')
+
+                if confirm:
                     sql = 'delete from readers where name="%s";' % (name)
                     cursor.execute(sql)
                     db.commit()
+                    deletereader_window.withdraw()
                     messagebox.showinfo(message='删除成功')
                     deletereader_window.destroy()
-                else:
-                    messagebox.showerror(message='该读者还有书没还，不能删除')
-
-        confirm = messagebox.askyesno(title='confirm', message='确定删除该读者的信息吗？')
-        if confirm:
-            delete()
+            else:
+                deletereader_window.withdraw()
+                messagebox.showerror(message='该读者还有书没还，不能删除')
+                deletereader_window.deiconify()
 
     Button(deletereader_window, command=delete_confirm, text='删除').place(x=170, y=130)
     deletereader_window.mainloop()
@@ -302,12 +369,14 @@ def searchbook():
         searchbook_window = Toplevel(now)
     finally:
         searchbook_window.title('searchbook_window')
-        searchbook_window.geometry('500x300')
+        searchbook_window.geometry(window_center(searchbook_window, 500, 300))
+        searchbook_window.wm_attributes("-topmost", 1)
 
         def use_name():
             use_name_gui = Toplevel(now)
             use_name_gui.title('use name to search')
-            use_name_gui.geometry('500x300')
+            use_name_gui.geometry(window_center(use_name_gui, 500, 300))
+            use_name_gui.wm_attributes("-topmost", 1)
 
             Label(use_name_gui, text='书名:').place(x=50, y=50)
 
@@ -320,7 +389,11 @@ def searchbook():
                 cursor.execute(sql)
                 a = cursor.fetchall()
                 if len(a) == 0:
+                    use_name_gui.withdraw()
+                    searchbook_window.withdraw()
                     messagebox.showerror(message='该书不存在')
+                    searchbook_window.deiconify()
+                    use_name_gui.deiconify()
                 else:
                     printbooks(a)
 
@@ -330,7 +403,8 @@ def searchbook():
         def use_type():
             use_type_gui = Toplevel(now)
             use_type_gui.title('use type to search')
-            use_type_gui.geometry('500x300')
+            use_type_gui.geometry(window_center(use_type_gui, 500, 300))
+            use_type_gui.wm_attributes("-topmost", 1)
 
             Label(use_type_gui, text='书类型名:').place(x=50, y=50)
 
@@ -343,7 +417,11 @@ def searchbook():
                 cursor.execute(sql)
                 b = cursor.fetchall()
                 if len(b) == 0:
+                    use_type_gui.withdraw()
+                    searchbook_window.withdraw()
                     messagebox.showerror(message='没有该类型')
+                    searchbook_window.deiconify()
+                    use_type_gui.deiconify()
                 else:
                     printbooks(b)
 
@@ -356,7 +434,9 @@ def searchbook():
             cursor.execute(sql)
             c = cursor.fetchall()
             if len(c) == 0:
+                searchbook_window.withdraw()
                 messagebox.showerror(message='所有的书都被借出了')
+                searchbook_window.deiconify()
             else:
                 printbooks(c)
 
@@ -378,8 +458,9 @@ def printbooks(s):
         now = reader
         print_books_window = Toplevel(now)
     finally:
-        print_books_window.geometry('600x1000')
+        print_books_window.geometry(window_center(print_books_window, 600, 800))
         print_books_window.title('All books')
+        print_books_window.wm_attributes("-topmost", 1)
 
         Label(print_books_window, text='ID').place(x=10, y=10)
         Label(print_books_window, text='Name').place(x=60, y=10)
@@ -431,7 +512,8 @@ def printreaders(s):
     '''
     print_readers_window = Toplevel(manager_gui)
     print_readers_window.title('Readers message')
-    print_readers_window.geometry('600x1000')
+    print_readers_window.geometry(window_center(print_readers_window, 600, 800))
+    print_readers_window.wm_attributes("-topmost", 1)
 
     Label(print_readers_window, text='Name').place(x=10, y=10)
     Label(print_readers_window, text='Sex').place(x=60, y=10)
@@ -500,11 +582,16 @@ def borrowlist():
     printreaders(results)
 
 
+def quit():
+    db.close()
+    os._exit(0)
+
+
 if __name__ == '__main__':
     db = connectdb()
     root = Tk()
     root.title('Weclome to Library System')
-    root.geometry('500x300')
+    root.geometry(window_center(root, 500, 300))
 
 
     def manager():
@@ -515,7 +602,7 @@ if __name__ == '__main__':
                 global manager_gui
                 manager_gui = Tk()
                 manager_gui.title('Book Manager System')
-                manager_gui.geometry('500x300')
+                manager_gui.geometry(window_center(manager_gui, 500, 300))
 
                 Button(manager_gui, text='查询所有书籍', command=querydb).place(x=50, y=50)
                 Button(manager_gui, text='查询指定书籍', command=searchbook).place(x=150, y=50)
@@ -524,17 +611,19 @@ if __name__ == '__main__':
                 Button(manager_gui, text='删除书籍', command=deletebook).place(x=50, y=150)
                 Button(manager_gui, text='查询读者', command=searchreader).place(x=150, y=150)
                 Button(manager_gui, text='删除读者', command=deletereader).place(x=250, y=150)
-                Button(manager_gui, text='退出系统', command=manager_gui.quit).place(x=350, y=150)
+                Button(manager_gui, text='退出系统', command=quit).place(x=350, y=150)
 
                 manager_gui.mainloop()
             else:
+                manager.withdraw()
                 messagebox.showerror(message='password is wrong,try again')
+                manager.deiconify()
 
         root.destroy()
         global manager
         manager = Tk()
         manager.title('Weclome back Manager')
-        manager.geometry('500x300')
+        manager.geometry(window_center(manager, 500, 300))
 
         pwd = StringVar()
         Label(manager, text='管理员密码：').place(x=50, y=50)
@@ -549,13 +638,13 @@ if __name__ == '__main__':
         global reader
         reader = Tk()
         reader.title('Weclome Reader')
-        reader.geometry('500x300')
+        reader.geometry(window_center(reader, 500, 300))
 
         Button(reader, text='查询所有书籍', command=querydb).place(x=100, y=50)
         Button(reader, text='查询指定书籍', command=searchbook).place(x=220, y=50)
         Button(reader, text='借出书籍', command=borrowbook).place(x=340, y=50)
         Button(reader, text='归还书籍', command=returnbook).place(x=150, y=150)
-        Button(reader, text='退出系统', command=reader.quit).place(x=250, y=150)
+        Button(reader, text='退出系统', command=quit).place(x=250, y=150)
 
         reader.mainloop()
 
@@ -564,4 +653,3 @@ if __name__ == '__main__':
     Button(root, text='管理员', command=manager).place(x=150, y=150, width=50, height=50)
     Button(root, text='读者', command=reader).place(x=300, y=150, width=50, height=50)
     root.mainloop()
-    db.close()
